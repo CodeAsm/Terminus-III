@@ -33,6 +33,7 @@ the original source and game can be found at https://web.archive.org/web/2005042
 #include <termios.h>
 #include <unistd.h>
 #include "fate.h"
+#include "helpers/gamestate.h"
 
 using namespace std;
 
@@ -61,6 +62,26 @@ char tem[50];          // Temporary string
 
 int main()
 {
+
+    GameState gameState;
+    gameState.initialize();
+
+    // Example usage
+    gameState.createDirectory("/home");
+    gameState.navigateTo("/home");
+    gameState.listDirectory();
+    gameState.createFile("example.txt", "Hello, World!");
+    gameState.createDirectory("new_folder");
+    gameState.listDirectory();
+    gameState.deleteFile("example.txt");
+    gameState.listDirectory();
+    gameState.deleteDirectory("new_folder");
+    gameState.listDirectory();
+
+    return 0;
+
+
+
 //
 // call menu
 // set colours
