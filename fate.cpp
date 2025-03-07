@@ -2,16 +2,20 @@
 
 ==============
 = F A T E =
-= v0.2 =
+= v0.2b =
 ==============
 
 Produced by m101
+Reworked by CodeAsm in 2025
 
-This code has been produced in Borland Turbo C++. 
-The entire source is not available here, and is not even written in the same language. 
-Please do not request the full source, i will provide copies of the source in diferent programming languages when i have time. 
+This code has been produced in Borland Turbo C++. Ha lol, nah, its gcc now baby. 
+The entire source is not available here, and is not even written in the same language. Or is it? 
+Please do not request the full source, i will provide copies of the source in diferent programming languages when i have time. Nah i wont.
 Updates will not be made to each source code. Feel free to distribute this code, but please give me credit for my work and do not change this header. 
+Will do. The original code was written by m101 and I enjoyed Fate1 and 2.ADJ_OFFSET_SINGLESHOT
+And now I present to you the source code for Fate3. Enjoy. 
 
+the original source and game can be found at https://web.archive.org/web/20050420084310/http://www.fatetek.net/getfate.shtml
 */
 
 //intro
@@ -20,17 +24,22 @@ Updates will not be made to each source code. Feel free to distribute this code,
 //****typer
 //****pauser
 //****debug
-#include <dos.h>
+//#include <dos.h>
 #include <math.h>
-#include <conio.h>
+//#include <conio.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-#include <iostream.h>
+//#include <iostream.h>
 #include <stdio.h>
 #include <string.h>
-#include <conio.h>
-#include <process.h>
+//#include <conio.h>
+//#include <process.h>
+#include <iostream>
+#include <termios.h>
+#include <unistd.h>
+
+using namespace std;
 
 void getstr();
 void ircopticon();
@@ -74,30 +83,28 @@ void boot();
 void interpret();
 void garbage();
 
-char *ptr;
-char osys[50];
-char systemm[50];
-char sys[50];
-char com[50];
-char arg[50];
-int success;
-int success2;
-char dir[50];
-char structure[200][50];
-char filestruct[200][50];
-int fileindex[200];
-char ostructure[200][50];
-char ofilestruct[200][50];
-int ofileindex[200];
-int telnetting;
-char user[50];
-char ouser[50];
-int storyline;
-int bypass;
-int shortened;
-int c;
-int i;
-char tem[50];
+char *ptr;          // Pointer for string manipulation
+char osys[50];      // Original system (to return to)
+char systemm[50];   // System message
+char sys[50];       // System name
+char com[50];       // Command
+char arg[50];       // Argument
+int success;        // Command success
+int success2;       // Command success 2 (for system specific commands)
+char dir[50];       // Directory
+char structure[200][50];    // Directory structure
+char filestruct[200][50];   // File structure
+int fileindex[200];         // File index
+char ostructure[200][50];   // Original directory structure
+char ofilestruct[200][50];  // Original file structure
+int ofileindex[200];        // Original file index
+int telnetting;        // Telnetting flag  (for returning to original system)
+char user[50];         // User
+char ouser[50];        // Original user (for returning to original system)
+int storyline;         // Storyline (to keep track of the story)
+int bypass;            // Bypass flag (for bypassing security)
+int shortened;         // Shortened intro flag (we don't want to show the intro while the menu not finished)
+char tem[50];          // Temporary string
 
 int main()
 {
@@ -125,6 +132,43 @@ void boot()
 {
 }
 
+
+/// @brief  Get a password from the user
+/// @param password     The password to get     
+/// @param size         The size of the password buffer
+/// @return             The password
+/// @note               The password is not echoed back to the user
+void getPassword(char *password, size_t size) {
+    struct termios oldt, newt;
+    int i = 0;
+    char c;
+
+    // Turn echoing off and fail if we can't
+    if (tcgetattr(STDIN_FILENO, &oldt) != 0) {
+        perror("tcgetattr");
+        exit(EXIT_FAILURE);
+    }
+    newt = oldt;
+    newt.c_lflag &= ~ECHO;
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &newt) != 0) {
+        perror("tcsetattr");
+        exit(EXIT_FAILURE);
+    }
+
+    // Read the password
+    while (i < size - 1 && read(STDIN_FILENO, &c, 1) == 1 && c != '\n') {
+        password[i++] = c;
+    }
+    password[i] = '\0';
+
+    // Restore terminal
+    if (tcsetattr(STDIN_FILENO, TCSANOW, &oldt) != 0) {
+        perror("tcsetattr");
+        exit(EXIT_FAILURE);
+    }
+}
+
+/// @brief  
 void login()
 {
 	int wronglogin=0;
@@ -149,10 +193,12 @@ void login()
 	cout << "Kernel 2.4.8-26A6 on an i686 / tty1\n";
 	redo:
 	cout << "Login: ";
-	gets(user);
+	fgets(user, sizeof(user), stdin);
+	user[strcspn(user, "\n")] = 0; // Remove newline character
 	cout << "Password: ";
-	gets(pass);
-	cout << endl;
+    pass = (char *) malloc(50);
+    getPassword(pass, sizeof(pass));
+    cout << endl;
 	if (strcmp(sys,"Area6")==0 && strcmp(user,"m101")==0 && strcmp(pass,"area6")==0)
 		goto logged;
 	if (strcmp(sys,"Area6")==0 && strcmp(user,"root")==0 && strcmp(pass,"moxalt")==0)
@@ -174,6 +220,7 @@ void login()
 	cout << endl;
 	if (wronglogin == 4 && telnetting==1)
 	{
+        int i;
 		strcpy(user,ouser);
 		strcpy(sys,osys);
 		for (i=1;i<200;i++)
@@ -193,6 +240,7 @@ void login()
 
 void area6()
 {
+    int i;
 	for(i=1;i<200;i++)
 	{
 		structure[i][0]='\0';
@@ -238,6 +286,7 @@ void area6()
 
 void Trinity()
 {
+    int i;
 	for(i=1;i<200;i++)
 	{
 		structure[i][0]='\0';
@@ -279,6 +328,7 @@ void Trinity()
 
 void Zion()
 {
+    int i;
 	for(i=1;i<200;i++)
 	{
 		structure[i][0]='\0';
@@ -327,6 +377,7 @@ fileindex[11]=21;
 
 void Morbid()
 {
+    int i;
 	for(i=1;i<200;i++)
 	{
 		structure[i][0]='\0';
@@ -418,10 +469,11 @@ void cline()
 	if(dir[strlen(dir)]=='/')
 		ptr = (char *) memcpy(dir2, dir, strlen(dir)-1);
 
-	if(strcmp(dir,"/")==0)
-		strcpy(dir2,"/");
 	cout << "[" << user << "@" << sys << " " << dir2 << "]";
-	gets(com);
+	fgets(com, sizeof(com), stdin);
+	com[strcspn(com, "\n")] = 0; // Remove newline character
+	cout << "[" << user << "@" << sys << " " << dir2 << "]";
+	fgets(com, sizeof(com), stdin);
 }
 
 void interpret()
@@ -430,6 +482,7 @@ void interpret()
 	char com2[50];
 	char tem2[50];
 	success2=0;
+    int i;
 	for(i=1;i<20;i++)
 	{
 		if(com[i]==' ')
@@ -530,6 +583,7 @@ void interpret()
 void cd()
 {
 	int correct;
+    int i;
 	char dirr[50];
 	strcpy(dirr,dir);
 	if (strcmp(arg,"..")==0)
@@ -581,6 +635,7 @@ void ls()
 {
 	int good=0;
 	int q;
+    int i;  
 	char tem2[50];
 	for(i=1;i<200;i++)
 	{
@@ -671,6 +726,7 @@ void halt()
 
 void mkdirr()
 {
+    int i;
 	if(strcmp(arg,"")==0)
 		goto done6;
 	for(i=1;i<200;i++)
@@ -773,6 +829,7 @@ void telnet()
 {
 	int failedtelnet=1;
 	telnetting=0;
+    int i;
 
 	if (strcmp(user,"root")==0)
 	{
@@ -903,6 +960,7 @@ telnetworked:
 success=1;
 success2=1;
 }
+
 void rm()
 {
 int remover=0;
@@ -910,6 +968,7 @@ int indexed;
 char tem2[50];
 success=1;
 success2=1;
+int i;
 if (strcmp(arg,"")==0)
 {
 goto endremove;
@@ -1009,6 +1068,7 @@ cout << "bash: " << com << ": Permission Denied" << endl;
 
 void updir()
 {
+    int i;
 	for(i=strlen(dir);i>0;i--)
 	{
 		if(dir[i]=='/')
@@ -1036,6 +1096,7 @@ void fileshow()
 		strcpy(tem2+strlen(tem2),arg);
 	}
 	file=0;
+    int i;
 	for(i=1;i<200;i++)
 	{
 		if (strcmp(tem2,filestruct[i])==0)
@@ -1198,6 +1259,7 @@ cout << "..........................................." << endl;
 cout << "Download Complete" << endl;
 cout << "\n";
 
+int i;
 for(i=1;i<200;i++)
 {
 	if (strcmp("",filestruct[i])==0)
@@ -1276,7 +1338,7 @@ cout << "................................." << endl;
 cout << "Download Complete" << endl;
 cout << endl;
 
-
+int i;
 for(i=1;i<200;i++)
 {
 	if (strcmp("",filestruct[i])==0)
@@ -1358,6 +1420,7 @@ cout << "................................." << endl;
 cout << "Download Complete" << endl;
 cout << endl;
 
+int i;
 for(i=1;i<200;i++)
 {
 	if (strcmp("",filestruct[i])==0)
@@ -1445,6 +1508,7 @@ cout << "................................." << endl;
 cout << "Download Complete" << endl;
 cout << endl;
 
+int i;
 for(i=1;i<200;i++)
 {
 	if (strcmp("",filestruct[i])==0)
@@ -1475,11 +1539,12 @@ void john()
 
 int woot;
 char hash[50];
-woot=0;
-cout << "John the Ripper v1.Area6" << endl;
+cout << "Please enter Password Hash: ";
+fgets(hash, sizeof(hash), stdin);
+hash[strcspn(hash, "\n")] = 0; // Remove newline character
 cout << "" << endl;
 cout << "Please enter Password Hash: ";
-gets(hash);
+fgets(hash,sizeof(hash), stdin);
 cout << "" << endl;
 cout << "Loaded 1 password (Standard DES [48/64 4K])" << endl;
 
@@ -1681,11 +1746,14 @@ success2 = 1;
 void bruteforcer()
 {
 char bruteuser[50];
-int pig=0;
+cout << "Username to Bruteforce: " << endl;
+fgets(bruteuser, sizeof(bruteuser), stdin);
+bruteuser[strcspn(bruteuser, "\n")] = 0; // Remove newline character
 cout << "Simple Bruteforce Login Cracker by Dead_Beat" << endl;
 cout << "" << endl;
 cout << "Username to Bruteforce: " << endl;
-gets(bruteuser);
+fgets(bruteuser, sizeof(bruteuser), stdin);
+bruteuser[strcspn(bruteuser, "\n")] = 0; // Remove newline character
 cout << "Creating Multiple Connections" << endl;
 
 //pause here
@@ -1694,7 +1762,7 @@ cout << "Creating Multiple Connections" << endl;
 //pause here
 
 //cout << useless characters
-
+int pig=0; //used to determine if password was cracked
 if (strcmp(arg,"44.236.143.86")==0 && strcmp(bruteuser,"ftp")==0)
 {
 pig=1;
