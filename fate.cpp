@@ -24,64 +24,17 @@ the original source and game can be found at https://web.archive.org/web/2005042
 //****typer
 //****pauser
 //****debug
-//#include <dos.h>
 #include <math.h>
-//#include <conio.h>
-#include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
-//#include <iostream.h>
 #include <stdio.h>
 #include <string.h>
-//#include <conio.h>
-//#include <process.h>
 #include <iostream>
 #include <termios.h>
 #include <unistd.h>
+#include "fate.h"
 
 using namespace std;
-
-void getstr();
-void ircopticon();
-void unicode();
-void dataa();
-void Morbid();
-void ircb0ilerdeadbeat();
-void menu();
-void zionwelcome();
-void Zion();
-void bruteforcer();
-void ircdeadbeat();
-void rm();
-void Trinity();
-void portscan();
-void ftpexploit();
-void ircharper();
-void telnet();
-void typer();
-void pausing();
-void intro();
-void john();
-void systemspecific();
-void whoami();
-void echo();
-void su();
-void fileshow();
-void cat();
-void debug();
-void mkdirr();
-void area6();
-void updir();
-void pwd();
-void cd();
-void ls();
-void halt();
-void cline();
-void bash();
-void login();
-void boot();
-void interpret();
-void garbage();
 
 char *ptr;          // Pointer for string manipulation
 char osys[50];      // Original system (to return to)
@@ -195,7 +148,7 @@ void login()
 	cout << "Login: ";
 	fgets(user, sizeof(user), stdin);
 	user[strcspn(user, "\n")] = 0; // Remove newline character
-	cout << "Password: ";
+    cout << "Password: " << flush;
     pass = (char *) malloc(50);
     getPassword(pass, sizeof(pass));
     cout << endl;
