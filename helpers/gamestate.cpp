@@ -41,7 +41,10 @@ void GameState::listDirectory() {
 
 void GameState::createFile(const std::string& name, const std::string& content) {
     // Create a new file in the current directory
-    auto file = std::make_shared<File>(name, content);
+    auto file = std::make_shared<File>(name, content, false, 0644, currentDirectory->name);
+    file->owner = "defaultOwner";
+    file->group = "defaultGroup";
+    file->permissions = 0644;
     currentDirectory->addFile(file);
 }
 
