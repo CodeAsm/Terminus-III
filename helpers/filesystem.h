@@ -5,19 +5,19 @@
 #include <memory>
 #include "directory.h"
 
-class FileSystem {
+class filesystem {
 public:
-    std::shared_ptr<Directory> currentDirectory;
-    std::shared_ptr<Directory> rootDirectory;
+    std::shared_ptr<directory> current_directory;
+    std::shared_ptr<directory> root_directory;
 
-    FileSystem(const std::shared_ptr<Directory>& root);
+    filesystem(const std::shared_ptr<directory>& root);
 
-    void navigateTo(const std::string& path);
-    void listDirectory();
-    void createFile(const std::string& name, const std::string& content);
-    void createDirectory(const std::string& name);
-    void deleteFile(const std::string& name);
-    void deleteDirectory(const std::string& name);
+    void navigate_to(const std::string& path);
+    void list_directory();
+    void create_file(const std::string& name, const std::string& content);
+    void create_directory(const std::string& path);
+    void delete_file(const std::string& name);
+    void delete_directory(const std::string& name);
 };
 
 #endif // FILESYSTEM_H

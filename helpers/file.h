@@ -6,7 +6,7 @@
 #include <iomanip>
 #include <sstream>
 
-class File {
+class file {
 public:
     std::string name;
     std::string content;
@@ -19,8 +19,8 @@ public:
     std::string owner;
     std::string group;
 
-    File();
-    File(const std::string& name, const std::string& content = "", bool readOnly = false, int permissions = 0644, std::string owner = "", std::string group = "");
+    file();
+    file(const std::string& name, const std::string& content = "", bool readOnly = false, int permissions = 0644, std::string owner = "", std::string group = "");
 
 private:
     std::string getCurrentTime();

@@ -1,6 +1,6 @@
 #include "file.h"
 
-File::File()
+file::file()
     : name(""), content(""), readOnly(false), permissions(0644), owner(""), group("") {
     creationTime = getCurrentTime();
     accessTime = creationTime;
@@ -8,7 +8,7 @@ File::File()
     size = 0;
 }
 
-File::File(const std::string& name, const std::string& content, bool readOnly, int permissions, std::string owner, std::string group)
+file::file(const std::string& name, const std::string& content, bool readOnly, int permissions, std::string owner, std::string group)
     : name(name), content(content), readOnly(readOnly), permissions(permissions), owner(owner), group(group) {
     creationTime = getCurrentTime();
     accessTime = creationTime;
@@ -16,7 +16,7 @@ File::File(const std::string& name, const std::string& content, bool readOnly, i
     size = content.size();
 }
 
-std::string File::getCurrentTime() {
+std::string file::getCurrentTime() {
     auto t = std::time(nullptr);
     auto tm = *std::localtime(&t);
     std::ostringstream oss;

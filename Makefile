@@ -25,7 +25,7 @@ else
 endif
 
 # Source files
-SRCS := fate.cpp helpers/gamestate.cpp targets/target.cpp helpers/filesystem.cpp helpers/directory.cpp helpers/file.cpp
+SRCS := fate.cpp helpers/gamestate.cpp targets/target.cpp helpers/directory.cpp helpers/file.cpp helpers/filesystem.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 # Build rules

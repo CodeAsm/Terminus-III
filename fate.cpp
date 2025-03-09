@@ -63,21 +63,49 @@ char tem[50];          // Temporary string
 int main()
 {
 
-    GameState gameState;
-    gameState.initialize();
+    gamestate game_state;
+    game_state.initialize();
+
+    // Setup the area6 server
+    setup_area6_server(game_state);
 
     // Example usage
-    gameState.createDirectory("/home");
-    gameState.navigateTo("/home");
-    gameState.listDirectory();
-    gameState.createFile("example.txt", "Hello, World!");
-    gameState.createDirectory("new_folder");
-    gameState.listDirectory();
-    gameState.deleteFile("example.txt");
-    gameState.listDirectory();
-    gameState.deleteDirectory("new_folder");
-    gameState.listDirectory();
+    /* DO NOT REMOVE, THIS IS A TEST
+    cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
+    game_state.active_filesystem->create_directory("home");
+    game_state.active_filesystem->create_directory("root");
+    game_state.active_filesystem->create_directory("etc");
+    game_state.active_filesystem->create_directory("bin");
+    game_state.active_filesystem->list_directory();
+    cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
+    game_state.active_filesystem->navigate_to("/home");
+    game_state.active_filesystem->create_directory("codeasm");
+    game_state.active_filesystem->create_directory("m101");
+    game_state.active_filesystem->create_directory("morpheus");
+    cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
+    game_state.active_filesystem->list_directory();
+    game_state.active_filesystem->create_file("example.txt", "Hello, World!");
+    game_state.active_filesystem->create_directory("new_folder");
+    cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
+    game_state.active_filesystem->list_directory();
+	game_state.active_filesystem->create_directory("/home/new_folder");
+	game_state.active_filesystem->navigate_to("/home/new_folder");
+    cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
+    game_state.active_filesystem->list_directory();
+    game_state.active_filesystem->navigate_to("/home");
+    cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
+    game_state.active_filesystem->list_directory();
+     */
 
+    game_state.active_filesystem->navigate_to("/");
+    game_state.active_filesystem->list_directory();
+    game_state.active_filesystem->navigate_to("/home");
+    game_state.active_filesystem->list_directory();
+    game_state.active_filesystem->navigate_to("/home/m101");
+    game_state.active_filesystem->list_directory();
+
+
+    bash(game_state);
     return 0;
 
 
@@ -207,12 +235,41 @@ void login()
 	}
 	goto redo;
 	logged:
-	bash();
+	//bash(gamestate& game_state);
 	badguesser:
 	cout << "";
 }
 
-void area6()
+
+void setup_area6_server(gamestate& game_state) {
+    // Create directories
+    game_state.active_filesystem->create_directory("/bin");
+    game_state.active_filesystem->create_directory("/etc");
+    game_state.active_filesystem->create_directory("/home");
+    game_state.active_filesystem->create_directory("/home/root");
+    game_state.active_filesystem->create_directory("/home/m101");
+    game_state.active_filesystem->create_directory("/lib");
+    game_state.active_filesystem->create_directory("/mnt");
+    game_state.active_filesystem->create_directory("/sbin");
+    game_state.active_filesystem->create_directory("/usr");
+    game_state.active_filesystem->create_directory("/var");
+    game_state.active_filesystem->create_directory("/usr/john");
+
+    // Create files
+    game_state.active_filesystem->create_file("/etc/passwd", "root:x:0:0:root:/root:/bin/bash\nm101:x:1000:1000:m101:/home/m101:/bin/bash\n");
+    game_state.active_filesystem->create_file("/bin/cat", "binary content");
+    game_state.active_filesystem->create_file("/bin/echo", "binary content");
+    game_state.active_filesystem->create_file("/bin/mkdir", "binary content");
+    game_state.active_filesystem->create_file("/bin/pwd", "binary content");
+    game_state.active_filesystem->create_file("/bin/su", "binary content");
+    game_state.active_filesystem->create_file("/home/m101/welcome", "Welcome to your home directory!\n");
+    game_state.active_filesystem->create_file("/usr/john/john", "binary content");
+    game_state.active_filesystem->create_file("/home/root/Area6", "Area6 specific content");
+    game_state.active_filesystem->create_file("/bin/telnet", "binary content");
+}
+
+
+void area6() //could be nuked.
 {
     int i;
 	for(i=1;i<200;i++)
@@ -408,22 +465,39 @@ strcpy(filestruct[14],"/usr/database/unicode");
 fileindex[14] = 27;
 
 }
-
+/*
 void bash()
 {
-	char dir2[50];
-	strcpy(dir,"/home/");
-	ptr = (char *) memcpy(dir+strlen(dir), user, strlen(user));
-	takeinput:
-	if(strcmp(sys,"Zion")==0 && strcmp(user,"root")==0)
-		storyline=4;
-	success=0;
-	cline();
-	if(strcmp(com,"")==0)
-		goto nexter;
-	interpret();
-	nexter:
-	goto takeinput;
+    char dir2[50];
+    strcpy(dir, "/home/");
+    ptr = (char *)memcpy(dir + strlen(dir), user, strlen(user));
+
+    while (true)
+    {
+        if (strcmp(sys, "Zion") == 0 && strcmp(user, "root") == 0)
+            storyline = 4;
+        success = 0;
+        cline();
+        if (strcmp(com, "") != 0)
+            interpret();
+    }
+}*/
+
+void bash(gamestate& game_state) {
+    // Navigate to the user's home directory
+    std::string home_dir = "/home/" + game_state.current_user;
+    game_state.active_filesystem->navigate_to(home_dir);
+
+    while (true) {
+        if (game_state.current_target->name == "Zion" && game_state.current_user == "root") {
+            game_state.storyline = 4;
+        }
+        //game_state.success = 0;
+        cline();
+        /*if (!game_state.com.empty()) {
+            interpret();
+        }*/
+    }
 }
 
 void cline()
@@ -452,106 +526,64 @@ void cline()
 
 void interpret()
 {
-	int correct=0;
-	char com2[50];
-	char tem2[50];
-	success2=0;
+    int correct = 0;
+    char com2[50];
+    char tem2[50];
+    success2 = 0;
     int i;
-	for(i=1;i<20;i++)
-	{
-		if(com[i]==' ')
-			goto answer;
-	}
-	goto skipper;
-	answer:
-	ptr =(char *)  memcpy(arg, com+i+1, strlen(com)-i);
-	com[i]='\0';
-	skipper:
-	if(strcmp(com,"cd")==0)
-	{
-		cd();
-		goto skipstuff;
-	}
-	if(strcmp(com,"ls")==0)
-	{
-		ls();
-		goto skipstuff;
-	}
-	if(strcmp(com,"pwd")==0)
-	{
-		pwd();
-		goto skipstuff;
-	}
-	if(strcmp(com,"halt")==0)
-	{
-		halt();
-		goto skipstuff;
-	}
-	if(strcmp(com,"mkdir")==0)
-	{
-		mkdirr();
-		goto skipstuff;
-	}
-	if(strcmp(com,"saifa")==0)
-	{
-		debug();
-		goto skipstuff;
-	}
-	if(strcmp(com,"cat")==0)
-	{
-		cat();
-		goto skipstuff;
-	}
-	if(strcmp(com,"echo")==0)
-	{
-		echo();
-		goto skipstuff;
-	}
-	if(strcmp(com,"su")==0)
-	{
-		su();
-		goto skipstuff;
-	}
-	if(strcmp(com,"whoami")==0)
-	{
-		whoami();
-		goto skipstuff;
-	}
-	if(strcmp(com,"telnet")==0)
-	{
-		telnet();
-		goto skipstuff;
-	}
-	if(strcmp(com,"rm")==0)
-	{
-		rm();
-		goto skipstuff;
-	}
-	if(success==1)
-		goto skipstuff;
-	strcpy(tem2,dir);
-	strcpy(tem2+strlen(tem2),"/");
-	strcpy(tem2+strlen(tem2),com);
-	for(i=1;i<200;i++)
-	{
-		if(strcmp(filestruct[i],com)==0)
-		{
-			correct=1;
-		}
-		if(strcmp(filestruct[i],tem2)==0)
-		{
-			correct=1;
-		}
-// compare for full directory structure
-	}
-	if(correct==1)
-	{
-		systemspecific();
-		success=1;
-	}
-	skipstuff:
-	if(success==0)
-		cout << "bash: " << com << ": command not found" << endl;
+
+    // Extract command and argument
+    for (i = 1; i < 20; i++) {
+        if (com[i] == ' ') {
+            ptr = (char *)memcpy(arg, com + i + 1, strlen(com) - i);
+            com[i] = '\0';
+            break;
+        }
+    }
+
+    // Command interpretation
+    if (strcmp(com, "cd") == 0) {
+        cd();
+    } else if (strcmp(com, "ls") == 0) {
+        ls();
+    } else if (strcmp(com, "pwd") == 0) {
+        pwd();
+    } else if (strcmp(com, "halt") == 0) {
+        halt();
+    } else if (strcmp(com, "mkdir") == 0) {
+        mkdirr();
+    } else if (strcmp(com, "saifa") == 0) {
+        debug();
+    } else if (strcmp(com, "cat") == 0) {
+        cat();
+    } else if (strcmp(com, "echo") == 0) {
+        echo();
+    } else if (strcmp(com, "su") == 0) {
+        su();
+    } else if (strcmp(com, "whoami") == 0) {
+        whoami();
+    } else if (strcmp(com, "telnet") == 0) {
+        telnet();
+    } else if (strcmp(com, "rm") == 0) {
+        rm();
+    } else {
+        // Check if the command is a file in the current directory
+        strcpy(tem2, dir);
+        strcat(tem2, "/");
+        strcat(tem2, com);
+        for (i = 1; i < 200; i++) {
+            if (strcmp(filestruct[i], com) == 0 || strcmp(filestruct[i], tem2) == 0) {
+                correct = 1;
+                break;
+            }
+        }
+        if (correct == 1) {
+            systemspecific();
+            success = 1;
+        } else {
+            cout << "bash: " << com << ": command not found" << endl;
+        }
+    }
 }
 
 void cd()

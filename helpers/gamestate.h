@@ -5,23 +5,20 @@
 #include <vector>
 #include <memory>
 #include "../targets/target.h"
+#include "filesystem.h"
 
-class GameState {
+class gamestate {
 public:
-    std::vector<std::shared_ptr<Target>> targets;
-    std::shared_ptr<Target> currentTarget;
-    std::shared_ptr<Directory> currentDirectory;
-    std::string currentUser;
+    std::vector<std::shared_ptr<target>> targets;
+    std::shared_ptr<target> current_target;
+    std::shared_ptr<filesystem> active_filesystem;
+    std::string current_user;
+    int storyline;
 
-    GameState();
+    gamestate();
 
     void initialize();
-    void navigateTo(const std::string& path);
-    void listDirectory();
-    void createFile(const std::string& name, const std::string& content);
-    void createDirectory(const std::string& name);
-    void deleteFile(const std::string& name);
-    void deleteDirectory(const std::string& name);
+    void switch_target(const std::shared_ptr<target>& new_target);
 };
 
 #endif // GAMESTATE_H

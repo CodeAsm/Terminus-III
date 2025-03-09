@@ -5,12 +5,12 @@
 #include <memory>
 #include "../helpers/directory.h"
 
-class Target {
+class target {
 public:
     std::string name;
-    std::shared_ptr<Directory> rootDirectory;
+    std::shared_ptr<directory> rootDirectory;
 
-    Target(const std::string& name, const std::shared_ptr<Directory>& rootDirectory)
+    target(const std::string& name, const std::shared_ptr<directory>& rootDirectory)
         : name(name), rootDirectory(rootDirectory) {}
 
     void reset();
