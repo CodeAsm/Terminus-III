@@ -10,11 +10,11 @@ SRCS := fate.cpp
 OBJS := $(SRCS:.cpp=.o)
 
 # Target executable
-TARGET := fate
+TARGET := F3te
 
 # Detect the OS
 ifeq ($(OS),Windows_NT)
-	TARGET := fate.exe
+	TARGET := F3te.exe
 	CXX := x86_64-w64-mingw32-g++
 	LDFLAGS += -static
 else

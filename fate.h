@@ -6,7 +6,7 @@
 // Function declarations
 void bruteforcer();
 void ircdeadbeat();
-void rm();
+void rm(gamestate& game_state);
 void Trinity();
 void portscan();
 void ftpexploit();
@@ -20,14 +20,14 @@ void systemspecific();
 void whoami();
 void echo();
 void su();
-void fileshow();
-void cat();
+void fileshow(gamestate& game_state);
+void cat(gamestate& game_state);
 void debug();
-void mkdirr();
+void mkdirr(gamestate& game_state);
 void area6();
 void updir();
-void pwd();
-void cd();
+void pwd(gamestate& game_state);
+void cd(gamestate& game_state);
 void ls(gamestate& game_state);
 void halt();
 void cline(gamestate& game_state);

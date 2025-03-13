@@ -26,6 +26,7 @@ the original source and game can be found at https://web.archive.org/web/2005042
 //****debug
 #include <math.h>
 #include <stdlib.h>
+#include <array>
 #include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
@@ -44,9 +45,9 @@ char sys[50];       // System name
 std::string com;    // Command
 char arg[50];       // Argument
 int success;        // Command success
-int success2;       // Command success 2 (for system specific commands)
-char dir[50];       // Directory
-char structure[200][50];    // Directory structure
+int success2;                       // Command success 2 (for system specific commands)
+std::array<std::string, 50> dir;    // Directory
+char structure[200][50];            // Directory structure
 char filestruct[200][50];   // File structure
 int fileindex[200];         // File index
 char ostructure[200][50];   // Original directory structure
@@ -99,9 +100,9 @@ int main()
 
     game_state.active_filesystem->navigate_to("/");
     game_state.active_filesystem->list_directory();
-	std::string dir = game_state.active_filesystem->navigate_to("/home");
+	game_state.active_filesystem->navigate_to("/home");
     game_state.active_filesystem->list_directory();
-    std::string dir = game_state.active_filesystem->navigate_to("/home/m101");
+    game_state.active_filesystem->navigate_to("/home/m101");
     game_state.active_filesystem->list_directory();
 
     //login should fill the current user.
@@ -528,19 +529,19 @@ void interpret(gamestate& game_state)
         iss >> com >> arg;
         // Command interpretation
         if (strcmp(com.c_str(), "cd") == 0) {
-            cd();
+            cd(game_state);
         } else if (strcmp(com.c_str(), "ls") == 0) {
             ls(game_state);
         } else if (strcmp(com.c_str(), "pwd") == 0) {
-            pwd();
+            pwd(game_state);
         } else if (strcmp(com.c_str(), "halt") == 0) {
             halt();
         } else if (strcmp(com.c_str(), "mkdir") == 0) {
-            mkdirr();
+            mkdirr(game_state);
         } else if (strcmp(com.c_str(), "saifa") == 0) {
             debug();
         } else if (strcmp(com.c_str(), "cat") == 0) {
-            cat();
+            cat(game_state);
         } else if (strcmp(com.c_str(), "echo") == 0) {
             echo();
         } else if (strcmp(com.c_str(), "su") == 0) {
@@ -550,78 +551,60 @@ void interpret(gamestate& game_state)
         } else if (strcmp(com.c_str(), "telnet") == 0) {
             telnet();
         } else if (strcmp(com.c_str(), "rm") == 0) {
-            rm();
+            rm(game_state);
         } else {
             // Check if the command is a file in the current directory
-            strcpy(tem2, dir);
-            strcat(tem2, "/");
-            strcat(tem2, com.c_str());
-            for (i = 1; i < 200; i++) {
-                if (strcmp(filestruct[i], com.c_str()) == 0 || strcmp(filestruct[i], tem2) == 0) {
-                    correct = 1;
-                    break;
-                }
-            }
-            if (correct == 1) {
-                systemspecific();
-                success = 1;
-            } else {
-                cout << "bash: " << com << ": command not found" << endl;
-            }
+			std::string temp_dir = dir[0]; // Assuming dir[0] is the current directory
+			strcpy(tem2, temp_dir.c_str());
+			strcat(tem2, "/");
+			strcat(tem2, com.c_str());
+			for (i = 1; i < 200; i++) {
+				if (strcmp(filestruct[i], com.c_str()) == 0 || strcmp(filestruct[i], tem2) == 0) {
+					correct = 1;
+					break;
+				}
+			}
+			if (correct == 1) {
+				systemspecific();
+				success = 1;
+			} else {
+				cout << "bash: " << com << ": command not found" << endl;
+			}
         }
     }
 }
 
 
+void cd(gamestate& game_state) {
+    std::string dirr = game_state.active_filesystem->current_directory->name;
+    std::string new_dir = arg;
 
-void cd(){
-	int correct;
-    int i;
-	char dirr[50];
-	strcpy(dirr,dir);
-	if (strcmp(arg,"..")==0)
-	{
-		updir();
-		goto done3;
-	}
-	if(arg[0]=='/')
-	{
-		strcpy(dir,arg);
-		goto done3;
-	}
-	if(strcmp(arg,"")==0)
-	{
-		goto done3;
-	}
-	if(strcmp(dir,"/")!=0)
-		strcpy(dir+strlen(dir),"/");
-	strcpy(dir+strlen(dir),arg);
-	done3:
-	if(strcmp(arg,"/")==0)
-		strcpy(dir,"/");
-	if(strcmp(dir,"")==0)
-		strcpy(dir,"/");
-	for(i=1;i<200;i++)
-	{
-		if(strcmp(structure[i],dir)==0)
-			correct=1;
-	}
-	if(strcmp(dir,"/home/root")==0 && strcmp(user,"root")!=0)
-	{
-		correct=2;
-	}
-	if(correct==0)
-	{
-		strcpy(dir,dirr);
-		cout << "bash: cd: " << arg << ":No such file or directory" << endl;
-	}
-	if(correct==2)
-	{
-		strcpy(dir,dirr);
-		cout << "bash: cd: " << arg << ":Permission Denied" << endl;
-	}
-	success=1;
-	success2=1;
+    if (new_dir == "..") {
+        game_state.active_filesystem->navigate_to("..");
+    } else if (new_dir.empty()) {
+        return;
+    } else if (new_dir[0] == '/') {
+        game_state.active_filesystem->navigate_to(new_dir);
+    } else {
+        std::string current_dir = game_state.active_filesystem->current_directory->name;
+        if (current_dir != "/") {
+            current_dir += "/";
+        }
+        current_dir += new_dir;
+        game_state.active_filesystem->navigate_to(current_dir);
+    }
+
+    std::string final_dir = game_state.active_filesystem->current_directory->name;
+    if (final_dir == "/home/root" && strcmp(user, "root") != 0) {
+        game_state.active_filesystem->navigate_to(dirr);
+        cout << "bash: cd: " << arg << ": Permission Denied" << endl;
+    } else if (final_dir != game_state.active_filesystem->current_directory->name) {
+        game_state.active_filesystem->navigate_to(dirr);
+        cout << "bash: cd: " << arg << ": No such file or directory" << endl;
+    }
+
+    success = 1;
+    success2 = 1;
 }
 
 void ls(gamestate& game_state)
@@ -634,60 +617,44 @@ void ls(gamestate& game_state)
     success2 = 1;
 
 }
-
-void pwd()
+void pwd(gamestate& game_state)
 {
-	cout << dir << endl;
-	success=1;
-	success2=1;
+    std::string current_dir = game_state.active_filesystem->current_directory->name;
+    cout << current_dir << endl;
+    success = 1;
+    success2 = 1;
 }
 
 void halt()
 {
 	exit(0);
 }
-
-void mkdirr()
+void mkdirr(gamestate& game_state)
 {
-    int i;
-	if(strcmp(arg,"")==0)
-		goto done6;
-	for(i=1;i<200;i++)
-	{
-		if(strcmp(structure[i],"")==0)
-			goto creater;
-	}
-	creater:
-	if(arg[0]=='/')
-	{
-		strcpy(structure[i],arg);
-	}
-	else
-	{
-		if(arg[0]=='/')
-		{
-			if(strcmp(dir,"/")==0)
-			{
-				strcpy(structure[i]+strlen(structure[i]),arg);
-			}
-			else
-			{
-				strcpy(structure[i]+strlen(structure[i]),"/");
-				strcpy(structure[i]+strlen(structure[i]),arg);
-			}
-		}
-		else
-		{
-			strcpy(structure[i],dir);
-			strcpy(structure[i]+strlen(structure[i]),"/");
-			strcpy(structure[i]+strlen(structure[i]),arg);
-		}
-		if(structure[i][1]=='/')
-			strcpy(structure[i],structure[i]+1);
-	}
-	done6:
-	success=1;
-	success2=1;
+    if (arg[0] == '\0') {
+        cout << "mkdir: missing operand" << endl;
+        return;
+    }
+
+    std::string new_dir = arg;
+    std::string current_dir = game_state.active_filesystem->current_directory->name;
+
+    if (new_dir[0] != '/') {
+        if (current_dir != "/") {
+            new_dir = current_dir + "/" + new_dir;
+        } else {
+            new_dir = "/" + new_dir;
+        }
+    }
+
+    bool created = game_state.active_filesystem->create_directory(new_dir);
+
+    if (!created) {
+        cout << "mkdir: cannot create directory '" << arg << "': File exists" << endl;
+    }
+
+    success = 1;
+    success2 = 1;
 }
 
 void debug()
@@ -695,11 +662,12 @@ void debug()
 cout << storyline << endl;
 }
 
-void cat()
+void cat(gamestate& game_state)
 {
-	fileshow();
-	success=1;
-	success2=1;
+
+	fileshow(game_state);
+    success = 1;
+    success2 = 1;
 }
 
 void echo()
@@ -883,67 +851,43 @@ telnetworked:
 success=1;
 success2=1;
 }
-
-void rm()
+void rm(gamestate& game_state)
 {
-int remover=0;
-int indexed;
-char tem2[50];
-success=1;
-success2=1;
-int i;
-if (strcmp(arg,"")==0)
-{
-goto endremove;
-}
-	if(arg[0]=='/')
-	{
-	strcpy(tem2,arg);
-	}
-	else
-	{
-		strcpy(tem2,dir);
-		strcpy(tem2+strlen(tem2),"/");
-		strcpy(tem2+strlen(tem2),arg);
-	}
-	indexed=0;
-	for(i=1;i<200;i++)
-	{
-		if (strcmp(tem2,filestruct[i])==0)
-		{
-			indexed=i;
-		}
-	}
-	if (indexed==0)
-	{
-	goto endremove;
-	}
-	for(i=1;i<200;i++)
-	{
-		if (strcmp("",filestruct[i])==0)
-		{
-			goto nextremove;
-		}
-	}
-	nextremove:
-	strcpy(filestruct[indexed],filestruct[i]);
-	fileindex[indexed]=fileindex[i];
-	strcpy(filestruct[i],"");
-	fileindex[i]=0;
-	remover=1;
+    std::string file_path = arg;
+    std::string current_dir = game_state.active_filesystem->current_directory->name;
 
-	//storyline stuff
+    if (file_path.empty())
+    {
+        cout << "bash: rm: missing operand" << endl;
+        return;
+    }
 
-	if (strcmp(tem2,"/var/logs/ftpdaccess")==0 && strcmp(sys,"Trinity")==0)
-	{
-	storyline=2;
-	}
+    if (file_path[0] != '/')
+    {
+        if (current_dir != "/")
+        {
+            file_path = current_dir + "/" + file_path;
+        }
+        else
+        {
+            file_path = "/" + file_path;
+        }
+    }
 
-	endremove:
-	if (remover==0)
-	{
-	cout << "bash: rm: " << arg << ": No such file or directory\n";
-	}
+    bool removed = game_state.active_filesystem->delete_file(file_path);
+
+    if (!removed)
+    {
+        cout << "bash: rm: " << arg << ": No such file or directory" << endl;
+    }
+    else
+    {
+        // storyline stuff
+        if (file_path == "/var/logs/ftpdaccess" && strcmp(sys, "Trinity") == 0)
+        {
+            storyline = 2;
+        }
+    }
 }
 
 void systemspecific()
@@ -988,154 +932,158 @@ if (success2 == 0)
 cout << "bash: " << com << ": Permission Denied" << endl;
 }
 }
-
-void updir()
+void updir(gamestate& game_state)
 {
-    int i;
-	for(i=strlen(dir);i>0;i--)
-	{
-		if(dir[i]=='/')
-			goto done2;
-	}
-	done2:
-	if(strcmp(dir,"")==0)
-		strcpy(dir,"/");
-	else
-		dir[i]='\0';
+    std::string current_dir = game_state.active_filesystem->current_directory->name;
+    size_t pos = current_dir.find_last_of('/');
+    if (pos != std::string::npos)
+    {
+        current_dir = current_dir.substr(0, pos);
+        if (current_dir.empty())
+        {
+            current_dir = "/";
+        }
+        game_state.active_filesystem->navigate_to(current_dir);
+    }
 }
 
-void fileshow()
+void fileshow(gamestate& game_state)
 {
-	int file;
-	char tem2[50];
-	if (arg[0]=='/')
-	{
-		strcpy(tem2,arg);
-	}
-	else
-	{
-		strcpy(tem2,dir);
-		strcpy(tem2+strlen(tem2),"/");
-		strcpy(tem2+strlen(tem2),arg);
-	}
-	file=0;
-    int i;
-	for(i=1;i<200;i++)
-	{
-		if (strcmp(tem2,filestruct[i])==0)
-		{
-			file=fileindex[i];
-		}
-	}
-	if (file==0)
-	{
-		cout << "bash: cat: " << arg << ":No such file or directory" << endl;
-	}
+    std::string current_dir = game_state.active_filesystem->current_directory->name;
+    std::string file_path = arg;
 
-	// Area-6 Sub-System
+    if (file_path[0] != '/')
+    {
+        if (current_dir != "/")
+        {
+            file_path = current_dir + "/" + file_path;
+        }
+        else
+        {
+            file_path = "/" + file_path;
+        }
+    }
 
-	// /etc/passwd
-	if (file==1)
-	{
-		cout << "root:vNMODFBHf8c.Y:0:0:root:/home/root:/bin/bash" <<endl;
-		cout << "m101:r0AFJLDkYbcvM:100:100:m101:/home/m101:/bin/bash"<<endl;
-	}
+    int file = 0;
+    for (int i = 1; i < 200; i++)
+    {
+        if (file_path == filestruct[i])
+        {
+            file = fileindex[i];
+            break;
+        }
+    }
 
-	// /bin/cat
-	if (file == 2)
-	{
-	garbage();
-	}
+    if (file == 0)
+    {
+        cout << "bash: cat: " << arg << ": No such file or directory" << endl;
+        return;
+    }
 
-	// /bin/echo
-	if (file==3)
-	{
-	garbage();
-	}
+    // Area-6 Sub-System
 
-	// /bin/mkdir
-	if (file==4)
-	{
-	garbage();
-	}
+    // /etc/passwd
+    if (file == 1)
+    {
+        cout << "root:vNMODFBHf8c.Y:0:0:root:/home/root:/bin/bash" << endl;
+        cout << "m101:r0AFJLDkYbcvM:100:100:m101:/home/m101:/bin/bash" << endl;
+    }
 
-	// /bin/pwd
-	if (file==5)
-	{
-	garbage();
-	}
+    // /bin/cat
+    if (file == 2)
+    {
+        garbage();
+    }
 
-	// /bin/su
-	if (file==6)
-	{
-	garbage();
-	}
+    // /bin/echo
+    if (file == 3)
+    {
+        garbage();
+    }
 
-	// /home/m101/welcome
-	if (file==7)
-	{
-	cout <<  "Welcome guest" << endl;
-	cout <<  "" << endl;
-	cout <<  "Your gateway is ready and equipped with the neccesary equipment" << endl;
-	cout <<  "for your first lesson." << endl;
-	cout <<  "" << endl;
-	cout <<  "You first require root on this system to access the files" << endl;
-	cout <<  "in the /home/root directory. Once you have aquired root you can" << endl;
-	cout <<  "continue your career by accessing the Area 6 IRC channel thru" << endl;
-	cout <<  "one of the tools you will find. Here you shall be able to gain" << endl;
-	cout <<  "new exploits from other people and gain further missions." << endl;
-	cout <<  "" << endl;
-	cout <<  "" << endl;
-	cout <<  "Good Luck" << endl;
-	cout <<  "" << endl;
-	cout <<  "---------------------------------------------------------------" << endl;
-	cout <<  "Your Fate is decided....." << endl;
-	cout <<  "~m101" << endl;
-	}
+    // /bin/mkdir
+    if (file == 4)
+    {
+        garbage();
+    }
 
-	// /usr/john
-	if (file==8)
-	{
-	garbage();
-	}
+    // /bin/pwd
+    if (file == 5)
+    {
+        garbage();
+    }
 
-	// /home/root/Area6
-	if (file==9)
-	{
-	cout <<  "Congratulations on your pathetic hack, before i give you a real" << endl;
-	cout <<  "mission, you will have to complete a series of simple hacks on" << endl;
-	cout <<  "low security facilities." << endl;
-	cout <<  "" << endl;
-	cout <<  "I have with me enough data on your past to send you to jail for" << endl;
-	cout <<  "for a very long time, i would suggest you do what i say, who" << endl;
-	cout <<  "knows it may even be profitable for you." << endl;
-	cout <<  "" << endl;
-	cout <<  "To continue please telnet to irc.area-6.net:6667, you will come" << endl;
-	cout <<  "in contact with an agent named harper, he will provide you with" << endl;
-	cout <<  "the tools you require for the next hack. Your next target shall" << endl;
-	cout <<  "be 203.59.0.206, gather your intelligence and gain root, DO NOT" << endl;
-	cout <<  "forget to clear the logs or your career with me will come to" << endl;
-	cout <<  "an abrupt stop and so shall your freedom..." << endl;
-	cout <<  "" << endl;
-	cout <<  "" << endl;
-	cout <<  "---------------------------------------------------------------" << endl;
-	cout <<  "Your Fate is decided....." << endl;
-	cout <<  "~m101" << endl;
-	}
+    // /bin/su
+    if (file == 6)
+    {
+        garbage();
+    }
 
-	// /home/root/portscan
-	if (file==10)
-	{
-	garbage();
-	}
+    // /home/m101/welcome
+    if (file == 7)
+    {
+        cout << "Welcome guest" << endl;
+        cout << "" << endl;
+        cout << "Your gateway is ready and equipped with the necessary equipment" << endl;
+        cout << "for your first lesson." << endl;
+        cout << "" << endl;
+        cout << "You first require root on this system to access the files" << endl;
+        cout << "in the /home/root directory. Once you have acquired root you can" << endl;
+        cout << "continue your career by accessing the Area 6 IRC channel through" << endl;
+        cout << "one of the tools you will find. Here you shall be able to gain" << endl;
+        cout << "new exploits from other people and gain further missions." << endl;
+        cout << "" << endl;
+        cout << "" << endl;
+        cout << "Good Luck" << endl;
+        cout << "" << endl;
+        cout << "---------------------------------------------------------------" << endl;
+        cout << "Your Fate is decided....." << endl;
+        cout << "~m101" << endl;
+    }
 
-	// /home/root/ftpexploit
-	if (file==11)
-	{
-	garbage();
-	}
+    // /usr/john
+    if (file == 8)
+    {
+        garbage();
+    }
 
-	// Trinity Sub-System
+    // /home/root/Area6
+    if (file == 9)
+    {
+        cout << "Congratulations on your pathetic hack, before I give you a real" << endl;
+        cout << "mission, you will have to complete a series of simple hacks on" << endl;
+        cout << "low security facilities." << endl;
+        cout << "" << endl;
+        cout << "I have with me enough data on your past to send you to jail for" << endl;
+        cout << "a very long time, I would suggest you do what I say, who" << endl;
+        cout << "knows it may even be profitable for you." << endl;
+        cout << "" << endl;
+        cout << "To continue please telnet to irc.area-6.net:6667, you will come" << endl;
+        cout << "in contact with an agent named harper, he will provide you with" << endl;
+        cout << "the tools you require for the next hack. Your next target shall" << endl;
+        cout << "be 203.59.0.206, gather your intelligence and gain root, DO NOT" << endl;
+        cout << "forget to clear the logs or your career with me will come to" << endl;
+        cout << "an abrupt stop and so shall your freedom..." << endl;
+        cout << "" << endl;
+        cout << "" << endl;
+        cout << "---------------------------------------------------------------" << endl;
+        cout << "Your Fate is decided....." << endl;
+        cout << "~m101" << endl;
+    }
+
+    // /home/root/portscan
+    if (file == 10)
+    {
+        garbage();
+    }
+
+    // /home/root/ftpexploit
+    if (file == 11)
+    {
+        garbage();
+    }
+
+    // Trinity Sub-System
 }
 
 void ircharper()

@@ -15,10 +15,10 @@ public:
     std::string navigate_to(const std::string& path);
     void list_directory();
     std::vector<std::string> list_directory(const std::string& path);
-    void create_file(const std::string& name, const std::string& content);
-    void create_directory(const std::string& path);
-    void delete_file(const std::string& name);
-    void delete_directory(const std::string& name);
+    bool create_file(const std::string& name, const std::string& content);
+    bool create_directory(const std::string& path);
+    bool delete_file(const std::string& name);
+    bool delete_directory(const std::string& name);
 };
 
 #endif // FILESYSTEM_H

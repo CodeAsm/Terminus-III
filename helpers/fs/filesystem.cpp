@@ -49,40 +49,6 @@ std::string filesystem::navigate_to(const std::string& path) {
     current_directory = target_directory;
     return path;
 }
-        current_directory = root_directory;
-        return;
-    }
-
-    std::istringstream iss(path);
-    std::string token;
-    std::vector<std::string> tokens;
-
-    while (std::getline(iss, token, '/')) {
-        if (!token.empty()) {
-            tokens.push_back(token);
-        }
-    }
-
-    std::shared_ptr<directory> target_directory = (path[0] == '/') ? root_directory : current_directory;
-
-    for (const auto& part : tokens) {
-        if (part == "..") {
-            if (target_directory->parent) {
-                target_directory = target_directory->parent;
-            }
-        } else {
-            auto subdir = target_directory->find_subdirectory(part);
-            if (subdir) {
-                target_directory = subdir;
-            } else {
-                std::cout << "Directory not found: " << part << std::endl;
-                return;
-            }
-        }
-    }
-
-    current_directory = target_directory;
-}
 
 void filesystem::list_directory() {
     // List the contents of the current directory
@@ -119,7 +85,7 @@ std::vector<std::string> filesystem::list_directory(const std::string& path) {
 
     return contents;
 }
-void filesystem::create_file(const std::string& path, const std::string& content) {
+bool filesystem::create_file(const std::string& path, const std::string& content) {
     // Resolve the path and create a new file in the specified directory
     std::istringstream iss(path);
     std::string token;
@@ -133,7 +99,7 @@ void filesystem::create_file(const std::string& path, const std::string& content
 
     if (tokens.empty()) {
         std::cout << "Invalid path: " << path << std::endl;
-        return;
+        return false;
     }
 
     std::shared_ptr<directory> target_directory = (path[0] == '/') ? root_directory : current_directory;
@@ -144,16 +110,17 @@ void filesystem::create_file(const std::string& path, const std::string& content
             target_directory = subdir;
         } else {
             std::cout << "Directory not found: " << tokens[i] << std::endl;
-            return;
+            return false;
         }
     }
 
     std::string file_name = tokens.back();
     std::shared_ptr<file> new_file = std::make_shared<file>(file_name, content);
     target_directory->add_file(new_file);
+    return true;
 }
 
-void filesystem::create_directory(const std::string& path) {
+bool filesystem::create_directory(const std::string& path) {
     // Create a new directory in the current directory
     std::istringstream iss(path);
     std::string token;
@@ -175,26 +142,31 @@ void filesystem::create_directory(const std::string& path) {
         }
         target_directory = subdir;
     }
+    return true;
 }
 
-void filesystem::delete_file(const std::string& name) {
+bool filesystem::delete_file(const std::string& name) {
     // Delete a file from the current directory
     auto file = current_directory->find_file(name);
     if (file) {
         current_directory->files.erase(std::remove(current_directory->files.begin(), current_directory->files.end(), file), current_directory->files.end());
         std::cout << "File deleted: " << name << std::endl;
+        return true;
     } else {
         std::cout << "File not found: " << name << std::endl;
+        return false;
     }
 }
 
-void filesystem::delete_directory(const std::string& name) {
+bool filesystem::delete_directory(const std::string& name) {
     // Delete a directory from the current directory
     auto dir = current_directory->find_subdirectory(name);
     if (dir) {
         current_directory->subdirectories.erase(std::remove(current_directory->subdirectories.begin(), current_directory->subdirectories.end(), dir), current_directory->subdirectories.end());
         std::cout << "Directory deleted: " << name << std::endl;
+        return true;
     } else {
         std::cout << "Directory not found: " << name << std::endl;
+        return false;
     }
 }
