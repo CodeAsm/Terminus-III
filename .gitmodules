@@ -1,0 +1,3 @@
+[submodule "helpers/sound/libxmp"]
+	path = helpers/sound/libxmp
+	url = https://github.com/libxmp/libxmp.git
