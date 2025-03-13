@@ -5,7 +5,7 @@
 #include <vector>
 #include <memory>
 #include "../targets/target.h"
-#include "filesystem.h"
+#include "fs/filesystem.h"
 
 class gamestate {
 public:

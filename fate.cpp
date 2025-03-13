@@ -41,7 +41,7 @@ char *ptr;          // Pointer for string manipulation
 char osys[50];      // Original system (to return to)
 char systemm[50];   // System message
 char sys[50];       // System name
-char com[50];       // Command
+std::string com;    // Command
 char arg[50];       // Argument
 int success;        // Command success
 int success2;       // Command success 2 (for system specific commands)
@@ -59,6 +59,7 @@ int storyline;         // Storyline (to keep track of the story)
 int bypass;            // Bypass flag (for bypassing security)
 int shortened;         // Shortened intro flag (we don't want to show the intro while the menu not finished)
 char tem[50];          // Temporary string
+
 
 int main()
 {
@@ -79,7 +80,6 @@ int main()
     game_state.active_filesystem->list_directory();
     cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
     game_state.active_filesystem->navigate_to("/home");
-    game_state.active_filesystem->create_directory("codeasm");
     game_state.active_filesystem->create_directory("m101");
     game_state.active_filesystem->create_directory("morpheus");
     cout << "Current directory: " << game_state.active_filesystem->current_directory->name << endl;
@@ -99,11 +99,13 @@ int main()
 
     game_state.active_filesystem->navigate_to("/");
     game_state.active_filesystem->list_directory();
-    game_state.active_filesystem->navigate_to("/home");
+	std::string dir = game_state.active_filesystem->navigate_to("/home");
     game_state.active_filesystem->list_directory();
-    game_state.active_filesystem->navigate_to("/home/m101");
+    std::string dir = game_state.active_filesystem->navigate_to("/home/m101");
     game_state.active_filesystem->list_directory();
 
+    //login should fill the current user.
+    strcpy(user, "root"); //TODO do some user shenanigans
 
     bash(game_state);
     return 0;
@@ -493,38 +495,26 @@ void bash(gamestate& game_state) {
             game_state.storyline = 4;
         }
         //game_state.success = 0;
-        cline();
-        /*if (!game_state.com.empty()) {
-            interpret();
-        }*/
+        cline(game_state);
+        if (!com.empty()) {
+            interpret(game_state);
+        }
     }
 }
 
-void cline()
+void cline(gamestate& game_state)
 {
-	char dir2[50];
-	arg[0]='\0';
-	strcpy(dir2,dir);
-//	for(i=0;i<strlen(dir);i++)
-//	{
-//		if(dir[strlen(dir)-i]=='/')
-//		goto done;
-//	}
-//	done:
-//	ptr = (char *) memcpy(dir2, dir,i+1);
-//	dir2[strlen(dir)+1]='\0';
+    std::string dir2 = game_state.active_filesystem->current_directory->name;
+    arg[0] = '\0';
 
-	if(dir[strlen(dir)]=='/')
-		ptr = (char *) memcpy(dir2, dir, strlen(dir)-1);
+    if (dir2.back() == '/')
+        dir2.pop_back();
 
-	cout << "[" << user << "@" << sys << " " << dir2 << "]";
-	fgets(com, sizeof(com), stdin);
-	com[strcspn(com, "\n")] = 0; // Remove newline character
-	cout << "[" << user << "@" << sys << " " << dir2 << "]";
-	fgets(com, sizeof(com), stdin);
+    cout << "[" << user << "@" << sys << " " << dir2 << "]";
+	std::getline(std::cin, com);
 }
 
-void interpret()
+void interpret(gamestate& game_state)
 {
     int correct = 0;
     char com2[50];
@@ -534,60 +524,57 @@ void interpret()
 
     // Extract command and argument
     for (i = 1; i < 20; i++) {
-        if (com[i] == ' ') {
-            ptr = (char *)memcpy(arg, com + i + 1, strlen(com) - i);
-            com[i] = '\0';
-            break;
-        }
-    }
-
-    // Command interpretation
-    if (strcmp(com, "cd") == 0) {
-        cd();
-    } else if (strcmp(com, "ls") == 0) {
-        ls();
-    } else if (strcmp(com, "pwd") == 0) {
-        pwd();
-    } else if (strcmp(com, "halt") == 0) {
-        halt();
-    } else if (strcmp(com, "mkdir") == 0) {
-        mkdirr();
-    } else if (strcmp(com, "saifa") == 0) {
-        debug();
-    } else if (strcmp(com, "cat") == 0) {
-        cat();
-    } else if (strcmp(com, "echo") == 0) {
-        echo();
-    } else if (strcmp(com, "su") == 0) {
-        su();
-    } else if (strcmp(com, "whoami") == 0) {
-        whoami();
-    } else if (strcmp(com, "telnet") == 0) {
-        telnet();
-    } else if (strcmp(com, "rm") == 0) {
-        rm();
-    } else {
-        // Check if the command is a file in the current directory
-        strcpy(tem2, dir);
-        strcat(tem2, "/");
-        strcat(tem2, com);
-        for (i = 1; i < 200; i++) {
-            if (strcmp(filestruct[i], com) == 0 || strcmp(filestruct[i], tem2) == 0) {
-                correct = 1;
-                break;
-            }
-        }
-        if (correct == 1) {
-            systemspecific();
-            success = 1;
+        std::istringstream iss(com);
+        iss >> com >> arg;
+        // Command interpretation
+        if (strcmp(com.c_str(), "cd") == 0) {
+            cd();
+        } else if (strcmp(com.c_str(), "ls") == 0) {
+            ls(game_state);
+        } else if (strcmp(com.c_str(), "pwd") == 0) {
+            pwd();
+        } else if (strcmp(com.c_str(), "halt") == 0) {
+            halt();
+        } else if (strcmp(com.c_str(), "mkdir") == 0) {
+            mkdirr();
+        } else if (strcmp(com.c_str(), "saifa") == 0) {
+            debug();
+        } else if (strcmp(com.c_str(), "cat") == 0) {
+            cat();
+        } else if (strcmp(com.c_str(), "echo") == 0) {
+            echo();
+        } else if (strcmp(com.c_str(), "su") == 0) {
+            su();
+        } else if (strcmp(com.c_str(), "whoami") == 0) {
+            whoami();
+        } else if (strcmp(com.c_str(), "telnet") == 0) {
+            telnet();
+        } else if (strcmp(com.c_str(), "rm") == 0) {
+            rm();
         } else {
-            cout << "bash: " << com << ": command not found" << endl;
+            // Check if the command is a file in the current directory
+            strcpy(tem2, dir);
+            strcat(tem2, "/");
+            strcat(tem2, com.c_str());
+            for (i = 1; i < 200; i++) {
+                if (strcmp(filestruct[i], com.c_str()) == 0 || strcmp(filestruct[i], tem2) == 0) {
+                    correct = 1;
+                    break;
+                }
+            }
+            if (correct == 1) {
+                systemspecific();
+                success = 1;
+            } else {
+                cout << "bash: " << com << ": command not found" << endl;
+            }
         }
     }
 }
 
-void cd()
-{
+
+
+void cd(){
 	int correct;
     int i;
 	char dirr[50];
@@ -637,84 +624,14 @@ void cd()
 	success2=1;
 }
 
-void ls()
+void ls(gamestate& game_state)
 {
-	int good=0;
-	int q;
-    int i;  
-	char tem2[50];
-	for(i=1;i<200;i++)
-	{
-		ptr =(char *)  memcpy(tem, structure[i], strlen(dir));
-		if(strcmp(dir,tem)==0)
-		{
-			if(strcmp(structure[i],tem)==0)
-			{
-				cout << "." << endl << ".." << endl;
-			}
-			else
-			{
-				strcpy(tem2,tem);
-				if(strcmp(dir,"/")==0)
-				{
-					ptr = (char *) memcpy(tem2, structure[i]+strlen(dir)-1, strlen(structure[i])-strlen(dir)+1);
-					tem2[strlen(structure[i])-strlen(dir)+1]='\0';
-				}
-				else
-				{
-					ptr = (char *) memcpy(tem2, structure[i]+strlen(dir), strlen(structure[i])-strlen(dir)+1);
-					tem2[strlen(structure[i])-strlen(dir)]='\0';
-				}
-				good=1;
-				for(q=1;q<strlen(tem2);q++)
-				{
-					if(tem2[q]=='/')
-						good=0;
-				}
-//remove values containing more than one /
-				if(good==1)
-					cout << tem2 << endl;
-			}
-		}
-	}
-
-	for(i=1;i<200;i++)
-	{
-		ptr =(char *)  memcpy(tem, filestruct[i], strlen(dir));
-		if(strcmp(dir,tem)==0)
-		{
-			if(strcmp(filestruct[i],tem)==0)
-			{
-				cout << "." << endl << ".." << endl;
-			}
-			else
-			{
-				strcpy(tem2,tem);
-				if(strcmp(dir,"/")==0)
-				{
-					ptr = (char *) memcpy(tem2, filestruct[i]+strlen(dir)-1, strlen(filestruct[i])-strlen(dir)+1);
-					tem2[strlen(filestruct[i])-strlen(dir)+1]='\0';
-				}
-				else
-				{
-					ptr = (char *) memcpy(tem2, filestruct[i]+strlen(dir), strlen(filestruct[i])-strlen(dir)+1);
-					tem2[strlen(filestruct[i])-strlen(dir)]='\0';
-				}
-				good=1;
-				for(q=1;q<strlen(tem2);q++)
-				{
-					if(tem2[q]=='/')
-						good=0;
-				}
-//remove values containing more than one /
-				if(good==1)
-					cout << tem2+1 << endl;
-			}
-		}
-	}
-
-	success=1;
-	success2=1;
+    std::vector<std::string> contents = game_state.active_filesystem->list_directory("/home");
+    for (const auto& item : contents) {
+        cout << item << endl;
+    }
+    success = 1;
+    success2 = 1;
 
 }
 
@@ -1031,37 +948,37 @@ goto endremove;
 
 void systemspecific()
 {
-if (strcmp(com,"john")==0)
+if (strcmp(com.c_str(),"john")==0)
 {
 john();
 }
-if (strcmp(com,"ftpexploit")==0)
+if (strcmp(com.c_str(),"ftpexploit")==0)
 {
 ftpexploit();
 }
-if (strcmp(com,"portscan")==0)
+if (strcmp(com.c_str(),"portscan")==0)
 {
 portscan();
 }
-if (strcmp(com,"bruteforcer")==0)
+if (strcmp(com.c_str(),"bruteforcer")==0)
 {
 bruteforcer();
 }
-if (strcmp(com,"unicode")==0)
+if (strcmp(com.c_str(),"unicode")==0)
 {
 unicode();
 }
-if (strcmp(com,"data")==0)
+if (strcmp(com.c_str(),"data")==0)
 {
 dataa();
 }
-if (strcmp(com,"/bin/bash")==0 && strcmp(sys,"Zion")==0 && bypass == 1)
+if (strcmp(com.c_str(),"/bin/bash")==0 && strcmp(sys,"Zion")==0 && bypass == 1)
 {
 success2 = 1;
 strcpy(user,"root");
 storyline = 4;
 }
-if (strcmp(com,"welcome")==0 && strcmp(sys,"Zion")==0)
+if (strcmp(com.c_str(),"welcome")==0 && strcmp(sys,"Zion")==0)
 {
 zionwelcome();
 success2 = 1;

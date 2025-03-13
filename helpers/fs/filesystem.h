@@ -12,8 +12,9 @@ public:
 
     filesystem(const std::shared_ptr<directory>& root);
 
-    void navigate_to(const std::string& path);
+    std::string navigate_to(const std::string& path);
     void list_directory();
+    std::vector<std::string> list_directory(const std::string& path);
     void create_file(const std::string& name, const std::string& content);
     void create_directory(const std::string& path);
     void delete_file(const std::string& name);

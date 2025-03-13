@@ -28,13 +28,13 @@ void area6();
 void updir();
 void pwd();
 void cd();
-void ls();
+void ls(gamestate& game_state);
 void halt();
-void cline();
+void cline(gamestate& game_state);
 void bash(gamestate& game_state);
 void login();
 void boot();
-void interpret();
+void interpret(gamestate& game_state);
 
 // New function to setup area6 server
 void setup_area6_server(gamestate& game_state);
